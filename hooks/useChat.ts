@@ -34,9 +34,23 @@ export function useStartConversation() {
 
 /** Messages for a conversation you're a participant of. Also marks it read. */
 export function useMessages(conversationId: string | null) {
+  const qc = useQueryClient();
+
   return useQuery({
     queryKey: ["chat", "messages", conversationId],
-    queryFn: () => apiClient.get<{ items: IMessage[] }>(`/api/chat/conversations/${conversationId}/messages`),
+    queryFn: async () => {
+      const res = await apiClient.get<{ items: IMessage[] }>(
+        `/api/chat/conversations/${conversationId}/messages`
+      );
+
+      // Opening the conversation marks messages as read.
+      // Refresh the conversation list so unreadCount updates.
+      qc.invalidateQueries({
+        queryKey: ["chat", "conversations"],
+      });
+
+      return res;
+    },
     enabled: !!conversationId,
     refetchInterval: MESSAGES_POLL_MS,
   });

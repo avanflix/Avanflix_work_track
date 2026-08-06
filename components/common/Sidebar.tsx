@@ -14,6 +14,7 @@ import {
   ClipboardList,
   MessageSquare,
 } from "lucide-react";
+import { useConversations } from "@/hooks/useChat";
 
 const NAV = [
   { href: "/dashboard", label: "Overview", icon: LayoutDashboard, roles: ["SUPER_ADMIN", "ADMIN", "EMPLOYEE"] },
@@ -42,6 +43,14 @@ export function Sidebar({
 }: SidebarProps) {
   const pathname = usePathname();
 
+  const { data: conversationData } = useConversations();
+
+  const unreadCount =
+    conversationData?.items?.reduce(
+      (total, conversation) => total + (conversation.unreadCount ?? 0),
+      0
+    ) ?? 0;
+
   return (
     <aside className="flex h-full w-64 flex-col border-r border-border bg-background p-4">
       <div className="mb-8 flex items-center gap-2 px-2">
@@ -69,8 +78,17 @@ export function Sidebar({
                   : "text-muted-foreground hover:bg-secondary hover:text-foreground"
               )}
             >
-              <item.icon className="h-4 w-4" />
-              {item.label}
+              <item.icon className="h-4 w-4 shrink-0" />
+
+              <div className="flex w-full items-center justify-between">
+                <span>{item.label}</span>
+
+                {item.href === "/dashboard/messages" && unreadCount > 0 && (
+                  <span className="flex h-5 min-w-[20px] items-center justify-center rounded-full bg-red-500 px-1.5 text-[11px] font-semibold text-white">
+                    {unreadCount > 99 ? "99+" : unreadCount}
+                  </span>
+                )}
+              </div>
             </Link>
           );
         })}
